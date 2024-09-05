@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classificação dos Melhores Jogadores</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            margin-top: 20px;
+        }
+        table {
+            width: 50%;
+            margin: 0 auto;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        #voltarBtn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #gifPipocando {
+            position: absolute;
+            width: 250px;
+            height: auto;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <h1>Classificação dos Melhores Jogadores</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Posição</th>
+                <th>Nome</th>
+                <th>Tempo (mm:ss)</th>
+            </tr>
+        </thead>
+        <tbody id="tabelaClassificacao">
+            <!-- Os dados serão preenchidos pelo JavaScript -->
+        </tbody>
+    </table>
+    <button id="voltarBtn" onclick="iniciarSom()">Voltar ao Jogo</button>
+
+    <!-- Adicionando o GIF pipocando -->
+    <div id="gifContainer">
+        <img id="gifPipocando" src="imagens/WS2k.gif" alt="Pipocando GIF">
+    </div>
+
+    <!-- Adicionando o som do rojão -->
+    <audio id="somRojao" src="imagens/Rojão.mp3" loop></audio>
+
+    <script>
+        function carregarClassificacao() {
+            let classificacao = JSON.parse(localStorage.getItem('classificacao')) || [];
+            const tabelaClassificacao = document.getElementById('tabelaClassificacao');
+
+            classificacao.forEach((jogador, index) => {
+                let novaLinha = tabelaClassificacao.insertRow();
+
+                let celulaPosicao = novaLinha.insertCell(0);
+                let celulaNome = novaLinha.insertCell(1);
+                let celulaTempo = novaLinha.insertCell(2);
+
+                celulaPosicao.textContent = index + 1;
+                celulaNome.textContent = jogador.nome;
+                celulaTempo.textContent = formatarTempo(jogador.tempo);
+            });
+        }
+
+        function formatarTempo(segundos) {
+            const minutos = Math.floor(segundos / 60);
+            const segundosRestantes = segundos % 60;
+            return `${String(minutos).padStart(2, '0')}:${String(segundosRestantes).padStart(2, '0')}`;
+        }
+
+        function iniciarSom() {
+            const somRojao = document.getElementById('somRojao');
+            somRojao.play();
+
+            setTimeout(() => {
+                window.location.href = 'index.html'; // Altere para o nome da sua página inicial
+            }, 5000); // Atraso de 5 segundos antes de redirecionar
+        }
+
+        // Carrega a classificação ao abrir a página
+        carregarClassificacao();
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const gif = document.getElementById('gifPipocando');
+
+            function moverGif() {
+                const maxX = window.innerWidth - gif.clientWidth;
+                const maxY = window.innerHeight - gif.clientHeight;
+                const posX = Math.floor(Math.random() * maxX);
+                const posY = Math.floor(Math.random() * maxY);
+
+                gif.style.left = posX + 'px';
+                gif.style.top = posY + 'px';
+            }
+
+            setInterval(moverGif, 1000); // Muda de posição a cada 1 segundo
+        });
+    </script>
+</body>
+</html>

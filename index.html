@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPIs</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Evitar barra de rolagem */
+        }
+        #cenario, #jogo {
+            display: none;
+            position: relative;
+        }
+        #boneco {
+            position: relative;
+            display: inline-block;
+            z-index: 2;
+        }
+        .epi {
+            position: absolute;
+            z-index: 3;
+        }
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            object-fit: cover;
+            filter: blur(4px); /* Desfoque reduzido */
+            opacity: 0.5; /* Transparência */
+        }
+        #imagemBoneco {
+            width: 200px; /* Tamanho reduzido do boneco */
+            height: auto;
+        }
+
+        #epis {
+    display: auto;
+    flex-wrap: auto;
+    margin-top: 150px; /* Ajuste este valor para a posição vertical */
+    /* Você pode adicionar outras propriedades conforme necessário */
+        }
+
+        #epis img {
+            width: 80px; /* Tamanho ajustado dos EPIs */
+            height: auto;
+            margin: 10px;
+        }
+        #cenarioFundo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            filter: blur(4px); /* Desfoque reduzido */
+            opacity: 0.5;
+        }
+        #reiniciarBtn {
+            display: block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+#cronometro {
+    font-size: 24px; /* Aumenta o tamanho da fonte */
+    font-weight: bold; /* Deixa a fonte em negrito */
+    color: black; /* Mantém a cor do texto */
+    position: absolute;
+    top: calc(50% - 400px); /* Ajuste a altura */
+    right: 300px; /* Ajuste a distância do lado direito */
+}
+
+#btnClassificacao {
+    position: absolute; /* Pode ser 'fixed' se quiser que ele sempre fique em uma posição fixa na tela */
+    bottom: 350px; /* Altere conforme necessário */
+    right: 267px; /* Altere conforme necessário */
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #4CAF50; /* Cor do fundo */
+    color: white; /* Cor do texto */
+    border: none;
+    cursor: pointer;
+    z-index: 1000; /* Para garantir que fique acima de outros elementos */
+}
+
+    </style>
+</head>
+<body>
+    <h1>Escolha os EPI's corretos!</h1> <!-- Alterado aqui -->
+   <div id="cenario">
+    <h2>Cadastro do Jogador</h2>
+    <input type="text" id="nomeJogador" placeholder="Digite seu nome">
+    <button onclick="cadastrarJogador()">Cadastrar</button>
+    <p id="feedbackCadastro"></p> <!-- Feedback do cadastro -->
+    
+    <h2>Escolha um cenário:</h2>
+    <button id="btnCanteiro" onclick="selecionarCenario('canteiro')" disabled>Canteiro de Obras</button>
+    <button id="btnLaboratorio" onclick="selecionarCenario('laboratorio')" disabled>Laboratório Químico</button>
+    <button id="btnIndustria" onclick="selecionarCenario('industria')" disabled>Indústria</button>
+    <button id="btnClassificacao" onclick="window.location.href='classificacao.html'">Verificar Classificação</button>
+    
+    <div id="boneco-inicial">
+        <img src="imagens/corpo.png" alt="Boneco" id="imagemBonecoInicial" width="200">
+    </div>
+</div>
+    </div>
+
+    <div id="cronometro">Tempo: 00:00</div>
+
+    <div id="jogo">
+        <h2 id="nomeCenario"></h2>
+        <img id="cenarioFundo" class="background">
+        <div id="boneco" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <img src="imagens/corpo.png" alt="Boneco" id="imagemBoneco">
+        </div>
+        <div id="epis"></div>
+        <button onclick="verificarEPIs()">Verificar EPIs</button>
+        <p id="feedback"></p>
+        <button id="reiniciarBtn" onclick="reiniciarPagina()">Reiniciar</button>
+    </div>
+
+    <!-- Elementos de áudio -->
+    <audio id="audioVitoria" src="imagens/vitoria.mp3"></audio>
+    <audio id="audioDerrota" src="imagens/derrota.mp3"></audio>
+    <audio id="trilhaSonora" src="imagens/Trilha tubarão.mp3" loop></audio>
+
+
+    <script>
+
+    let intervalId;
+let segundos = 0;
+
+function iniciarCronometro() {
+    // Inicia o cronômetro e atualiza a cada segundo
+    intervalId = setInterval(() => {
+        segundos++;
+        document.getElementById('cronometro').textContent = `Tempo: ${formatarTempo(segundos)}`;
+
+        // Verifica se o tempo limite (75 segundos) foi atingido
+        if (segundos >= 75) {
+            pararCronometro(); // Para o cronômetro 
+            redirecionarParaTempoEsgotado(); // Redireciona para a página de tempo esgotado
+        }
+    }, 1000);
+}
+
+// Função que será chamada quando o tempo acabar
+function tempoEsgotado() {
+    const body = document.body;
+    
+    // Adiciona a classe de transição
+    body.classList.add('fade-out');
+
+    // Redireciona após um pequeno atraso para permitir que a transição ocorra
+    setTimeout(() => {
+        window.location.href = 'tempo_esgotado.html'; // Redireciona para a página de Game Over
+    }, 1000); // Alinhado com o tempo da transição
+}
+
+function redirecionarParaTempoEsgotado() {
+    window.location.href = 'tempo_esgotado.html'; // Redireciona para a página de tempo esgotado
+}
+
+function pararCronometro() {
+    // Para o cronômetro
+    clearInterval(intervalId);
+}
+
+function resetarCronometro() {
+    // Para o cronômetro e reseta a contagem
+    pararCronometro();
+    segundos = 0;
+    document.getElementById('cronometro').textContent = `Tempo: 00:00`;
+}
+
+function formatarTempo(segundos) {
+    const minutos = Math.floor(segundos / 60);
+    const segundosRestantes = segundos % 60;
+    return `${String(minutos).padStart(2, '0')}:${String(segundosRestantes).padStart(2, '0')}`;
+}
+
+// Ao selecionar um cenário
+function selecionarCenario() {
+    resetarCronometro(); // Reseta o cronômetro ao selecionar um cenário
+    iniciarCronometro(); // Inicia o cronômetro ao começar o jogo
+    
+    // Seu código para configurar o cenário...
+}
+
+// Ao voltar para a tela de seleção de cenários
+function voltarParaSelecao() {
+    pararCronometro(); // Para o cronômetro ao voltar para a seleção
+    resetarCronometro(); // Opcional: Reseta o cronômetro para 00:00
+
+    // Seu código para voltar à tela de seleção...
+}
+
+let listaJogadores = [];
+
+function cadastrarJogador() {
+    const nomeJogador = document.getElementById('nomeJogador').value.trim();
+    const feedbackCadastro = document.getElementById('feedbackCadastro');
+
+    if (nomeJogador === "") {
+        feedbackCadastro.textContent = "Por favor, insira um nome válido.";
+        return;
+    }
+
+    if (listaJogadores.length >= 15) {
+        listaJogadores.shift(); // Remove o primeiro jogador da lista
+    }
+
+    listaJogadores.push(nomeJogador);
+    feedbackCadastro.textContent = `Jogador ${nomeJogador} cadastrado com sucesso!`;
+
+    liberarCenarios(); // Libera os cenários após o cadastro
+
+    // Limpa o campo de entrada
+    document.getElementById('nomeJogador').value = "";
+}
+
+function liberarCenarios() {
+    document.getElementById('btnCanteiro').disabled = false;
+    document.getElementById('btnLaboratorio').disabled = false;
+    document.getElementById('btnIndustria').disabled = false;
+}
+
+        const episData = {
+    canteiro: [
+        { src: 'imagens/Capacete_e_oculos_e_mascara_e_protetor-removebg-preview.png', alt: 'Capacete e óculos de proteção com máscara', id: 'capacete_oculos_mascara', position: { top: -8, left: 20, width: 167, height: 170 } },
+        { src: 'imagens/corpo_remo_2.png', alt: 'Cinto de segurança', id: 'cinto', position: { top: 80, left: 10, width: 210, height: 260 } },
+        { src: 'imagens/cabeça_3-removebg-preview.png', alt: 'Capacete e óculos', id: 'cabeca_3', position: { top: -8, left: 20, width: 167, height: 158 } },
+        { src: 'imagens/cabeça_remo_1.png', alt: 'Capacete e óculos', id: 'cabeca_remo_1', position: { top: -8, left: 13, width: 178, height: 150 } },
+        { src: 'imagens/óculos-removebg-preview.png', alt: 'Óculos de proteção', id: 'oculos', position: { top: 23, left: 32, width: 148, height: 135 } },
+        { src: 'imagens/Capacete_e_oculos.png', alt: 'Capacete e óculos', id: 'capacete_oculos', position: { top: -25, left: 2, width: 210, height: 195 } },
+        { src: 'imagens/Capacete_e_oculos_e_protetor.png', alt: 'Capacete e óculos e protetor', id: 'capacete_oculos_protetor', position: { top: 3, left: 27, width: 160, height: 150 } },
+        { src: 'imagens/luva_errada_direita-removebg-preview.png', alt: 'Luva errada direita', id: 'luva_errada_direita', position: { top: 190, left: 40, width: 40, height: 40 } },
+        { src: 'imagens/luva_errada_esquerda-removebg-preview.png', alt: 'Luva errada esquerda', id: 'luva_errada_esquerda', position: { top: 196, left: 133, width: 40, height: 40 } },
+        { src: 'imagens/direita-removebg-preview.png', alt: 'Proteção lateral direita', id: 'direita', position: { top: 190, left: 40, width: 40, height: 40 } },
+        { src: 'imagens/esquerda-removebg-preview.png', alt: 'Proteção lateral esquerda', id: 'esquerda', position: { top: 196, left: 133, width: 40, height: 40 } },
+        { src: 'imagens/óculos-removebg-preview.png', alt: 'Óculos de proteção', id: 'oculos', position: { top: 23, left: 32, width: 148, height: 135 } },
+        { src: 'imagens/boné-removebg-preview.png', alt: 'Boné', id: 'bone', position: { top: 7, left: 15, width: 168, height: 149 } },
+        { src: 'imagens/meu_tenis.png', alt: 'Tênis', id: 'tenis', position: { top: 183, left: 57, width: 100, height: 140 } },
+        { src: 'imagens/radio_1.png', alt: 'Rádio', id: 'radio', position: { top: -55, left: 10, width: 300, height: 240 } }
+    ],
+    laboratorio: [
+        { src: 'imagens/Capacete_e_oculos_e_mascara_e_protetor-removebg-preview.png', alt: 'Capacete e óculos de proteção com máscara', id: 'capacete_oculos_mascara', position: { top: -8, left: 20, width: 167, height: 170 } },
+        { src: 'imagens/corpo_remo_2.png', alt: 'Cinto de segurança', id: 'cinto', position: { top: 80, left: 10, width: 210, height: 260 } },
+        { src: 'imagens/cabeça_3-removebg-preview.png', alt: 'Capacete e óculos', id: 'cabeca_3', position: { top: -8, left: 20, width: 167, height: 158 } },
+        { src: 'imagens/cabeça_remo_1.png', alt: 'Capacete e óculos', id: 'cabeca_remo_1', position: { top: -8, left: 13, width: 178, height: 150 } },
+        { src: 'imagens/Capacete_e_oculos.png', alt: 'Capacete e óculos', id: 'capacete_oculos', position: { top: -25, left: 2, width: 210, height: 195 } },
+        { src: 'imagens/Capacete_e_oculos_e_protetor.png', alt: 'Capacete e óculos e protetor', id: 'capacete_oculos_protetor', position: { top: 3, left: 27, width: 160, height: 150 } },
+        { src: 'imagens/luva_errada_direita-removebg-preview.png', alt: 'Luva errada direita', id: 'luva_errada_direita', position: { top: 190, left: 40, width: 40, height: 40 } },
+        { src: 'imagens/luva_errada_esquerda-removebg-preview.png', alt: 'Luva errada esquerda', id: 'luva_errada_esquerda', position: { top: 196, left: 133, width: 40, height: 40 } },
+        { src: 'imagens/boné-removebg-preview.png', alt: 'Boné', id: 'bone', position: { top: 7, left: 15, width: 168, height: 149 } },
+        { src: 'imagens/cabeça_remo_2.png', alt: 'Óculos de proteção', id: 'oculos', position: { top: 19, left: 34, width: 135, height: 135 } },
+        { src: 'imagens/cabeça_remo_3.png', alt: 'Máscara respiratória', id: 'mascara', position: { top: 17, left: 27, width: 150, height: 131 } },
+        { src: 'imagens/quimico-removebg-preview_1.png', alt: 'Conjunto Químico Completo', id: 'conjunto_quimico', position: { top: 140, left: 17, width: 160, height: 190 } },
+        { src: 'imagens/meu_tenis.png', alt: 'Tênis', id: 'tenis', position: { top: 183, left: 57, width: 100, height: 140 } },
+        { src: 'imagens/radio_1.png', alt: 'Rádio', id: 'radio', position: { top: -55, left: 10, width: 300, height: 240 } }
+    ],
+    industria: [
+        { src: 'imagens/Capacete_e_oculos_e_mascara_e_protetor-removebg-preview.png', alt: 'Capacete e óculos de proteção com máscara', id: 'capacete_oculos_mascara', position: { top: -8, left: 20, width: 167, height: 170 } },
+        { src: 'imagens/corpo_remo_2.png', alt: 'Cinto de segurança', id: 'cinto', position: { top: 80, left: 10, width: 210, height: 260 } },
+        { src: 'imagens/cabeça_3-removebg-preview.png', alt: 'Capacete e óculos', id: 'cabeca_3', position: { top: -8, left: 20, width: 167, height: 158 } },
+        { src: 'imagens/cabeça_remo_1.png', alt: 'Capacete e óculos', id: 'cabeca_remo_1', position: { top: -8, left: 13, width: 178, height: 150 } },
+        { src: 'imagens/Capacete_e_oculos.png', alt: 'Capacete e óculos', id: 'capacete_oculos', position: { top: -25, left: 2, width: 210, height: 195 } },
+        { src: 'imagens/Capacete_e_oculos_e_protetor.png', alt: 'Capacete e óculos e protetor', id: 'capacete_oculos_protetor', position: { top: 3, left: 27, width: 160, height: 150 } },
+        { src: 'imagens/luva_errada_direita-removebg-preview.png', alt: 'Luva errada direita', id: 'luva_errada_direita', position: { top: 190, left: 40, width: 40, height: 40 } },
+        { src: 'imagens/luva_errada_esquerda-removebg-preview.png', alt: 'Luva errada esquerda', id: 'luva_errada_esquerda', position: { top: 196, left: 133, width: 40, height: 40 } },
+        { src: 'imagens/boné-removebg-preview.png', alt: 'Boné', id: 'bone', position: { top: 7, left: 15, width: 168, height: 149 } },
+        { src: 'imagens/cabeça_remo_2.png', alt: 'Óculos de proteção', id: 'oculos', position: { top: 19, left: 34, width: 135, height: 135 } },
+        { src: 'imagens/cabeça_remo_3.png', alt: 'Máscara respiratória', id: 'mascara', position: { top: 17, left: 27, width: 150, height: 131 } },
+        { src: 'imagens/quimico-removebg-preview_1.png', alt: 'Conjunto Químico Completo', id: 'conjunto_quimico', position: { top: 140, left: 17, width: 160, height: 190 } },
+        { src: 'imagens/meu_tenis.png', alt: 'Tênis', id: 'tenis', position: { top: 183, left: 57, width: 100, height: 140 } },
+        { src: 'imagens/radio_1.png', alt: 'Rádio', id: 'radio', position: { top: -55, left: 10, width: 300, height: 240 } }
+    ]
+};
+
+        function selecionarCenario(cenario) {
+        iniciarCronometro();
+
+    // Outras configurações específicas do cenário...
+
+    document.getElementById('cenario').style.display = 'none';
+    document.getElementById('jogo').style.display = 'block';
+
+
+    // Atualize o nome do cenário
+    const nomeCenario = cenario === 'canteiro' ? 'Canteiro de Obras com trabalho em altura' :
+                        cenario === 'laboratorio' ? 'Vazamento em Laboratório Químico' :
+                        cenario === 'industria' ? 'Visita na Indústria' : 'Industria';
+    document.getElementById('nomeCenario').textContent = nomeCenario;
+
+    // Atualize os EPIs
+    const episDiv = document.getElementById('epis');
+    episDiv.innerHTML = '';
+    episData[cenario].forEach(epi => {
+        const img = document.createElement('img');
+        img.src = epi.src;
+        img.alt = epi.alt;
+        img.id = epi.id;
+        img.draggable = true;
+        img.ondragstart = drag;
+        img.ontouchstart = touchStart;
+        img.ontouchmove = touchMove;
+        img.ontouchend = touchEnd;
+        img.dataset.position = JSON.stringify(epi.position);
+        img.classList.add('selectable-epi');
+        episDiv.appendChild(img);
+    });
+
+    // Atualize o fundo
+    const fundoSrc = cenario === 'canteiro' ? 'imagens/cenario_canteiro.png' :
+                     cenario === 'laboratorio' ? 'imagens/fundo_laboratorio.png' :
+                     cenario === 'industria' ? 'imagens/industria.png' : '';
+    document.getElementById('cenarioFundo').src = fundoSrc;
+
+    // Tocar a trilha sonora
+    const trilhaSonora = document.getElementById('trilhaSonora');
+    trilhaSonora.play();
+}
+
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.id);
+        }
+
+        function drop(ev) {
+    ev.preventDefault();
+    const data = ev.dataTransfer.getData("text");
+    const element = document.getElementById(data);
+    const position = JSON.parse(element.dataset.position);
+
+    // Clonar o EPI e adicionar ao boneco
+    const imgClone = element.cloneNode(true);
+    imgClone.style.position = 'absolute';
+    imgClone.style.top = position.top + 'px';
+    imgClone.style.left = position.left + 'px';
+    imgClone.style.width = position.width + 'px';
+    imgClone.style.height = position.height + 'px';
+    imgClone.classList.add('epi');
+    imgClone.dataset.positionOriginal = JSON.stringify(position); // Salvar a posição original para remoção
+    imgClone.dataset.originalId = element.id; // Salvar o ID original
+
+    // Remover eventuais listeners antigos para evitar múltiplos eventos
+    imgClone.removeEventListener('click', removerEPIs);
+    imgClone.addEventListener('click', removerEPIs);
+
+    document.getElementById('boneco').appendChild(imgClone);
+}
+
+        let touchElement = null;
+        let initialX = 0;
+        let initialY = 0;
+
+        function touchStart(ev) {
+            touchElement = ev.target;
+            initialX = ev.touches[0].clientX - touchElement.offsetLeft;
+            initialY = ev.touches[0].clientY - touchElement.offsetTop;
+            ev.target.style.position = 'absolute';
+        }
+
+        function touchMove(ev) {
+            ev.preventDefault();
+            if (touchElement) {
+                const x = ev.touches[0].clientX - initialX;
+                const y = ev.touches[0].clientY - initialY;
+                touchElement.style.left = `${x}px`;
+                touchElement.style.top = `${y}px`;
+            }
+        }
+
+        function touchEnd(ev) {
+            if (touchElement) {
+                const dropZone = document.getElementById('boneco');
+                const dropRect = dropZone.getBoundingClientRect();
+                const elementRect = touchElement.getBoundingClientRect();
+
+                if (elementRect.left >= dropRect.left && elementRect.top >= dropRect.top &&
+                    elementRect.right <= dropRect.right && elementRect.bottom <= dropRect.bottom) {
+                    
+                    const position = JSON.parse(touchElement.dataset.position);
+
+                    const imgClone = touchElement.cloneNode();
+                    imgClone.style.position = 'absolute';
+                    imgClone.style.top = position.top + 'px';
+                    imgClone.style.left = position.left + 'px';
+                    imgClone.style.width = position.width + 'px';
+                    imgClone.style.height = position.height + 'px';
+                    imgClone.classList.add('epi');
+                    document.getElementById('boneco').appendChild(imgClone);
+
+                    touchElement.remove();
+                }
+
+                touchElement = null;
+            }
+        }
+
+        function verificarEPIs() {
+    const audios = {
+        vitoria: document.getElementById('audioVitoria'),
+        derrota: document.getElementById('audioDerrota')
+    };
+
+    const cenario = document.getElementById('nomeCenario').textContent;
+    const boneco = document.getElementById('boneco');
+    const epis = Array.from(boneco.getElementsByClassName('epi')).map(epi => epi.id);
+
+    let corretos = false;
+
+    if (cenario === 'Canteiro de Obras com trabalho em altura') {
+        const combinacoesCorretas = [
+            ['capacete_oculos_protetor', 'direita', 'esquerda', 'cinto'],
+            ['capacete_oculos_mascara', 'direita', 'esquerda', 'cinto']
+        ];
+
+        corretos = combinacoesCorretas.some(combinacao => 
+            combinacao.every(id => epis.includes(id)) && epis.length === combinacao.length
+        );
+
+    } else if (cenario === 'Vazamento em Laboratório Químico') {
+        const combinacoesCorretas = [
+            ['conjunto_quimico', 'capacete_oculos_mascara']
+        ];
+
+        corretos = combinacoesCorretas.some(combinacao => 
+            combinacao.every(id => epis.includes(id)) && epis.length === combinacao.length
+        );
+
+    } else if (cenario === 'Visita na Indústria') {
+        const combinacoesCorretas = [
+            ['capacete_oculos_protetor'],
+            ['capacete_oculos_protetor', 'direita', 'esquerda'],
+            ['capacete_oculos_protetor', 'cinto'],
+            ['capacete_oculos_protetor', 'direita', 'esquerda', 'cinto'],
+            ['capacete_oculos_mascara'],
+            ['capacete_oculos_mascara', 'direita', 'esquerda'],
+            ['capacete_oculos_mascara', 'direita', 'esquerda', 'cinto'],
+            ['capacete_oculos_mascara', 'cinto']
+        ];
+
+        corretos = combinacoesCorretas.some(combinacao => 
+            combinacao.every(id => epis.includes(id)) && epis.length === combinacao.length
+        );
+    }
+
+    if (corretos) {
+        document.getElementById('feedback').textContent = 'Parabéns! Todos os EPIs estão corretos!';
+        audios.vitoria.play();
+        
+        pararCronometro(); // Pausa o cronômetro quando o jogador acerta
+
+        // Obtém o tempo total decorrido
+        const tempoDecorrido = segundos; // Supondo que a variável 'segundos' esteja sendo usada para contar o tempo
+
+        // Parar a trilha sonora se o jogador acertar
+        const trilhaSonora = document.getElementById('trilhaSonora');
+        trilhaSonora.pause();
+        trilhaSonora.currentTime = 0; // Reiniciar a música para a próxima vez
+
+        // Salvar a pontuação do jogador
+        const nomeJogador = prompt("Parabéns! Digite seu nome para salvar a pontuação:");
+        if (nomeJogador) {
+            salvarPontuacao(nomeJogador, tempoDecorrido);
+        }
+
+    } else {
+        document.getElementById('feedback').textContent = 'Alguns EPIs estão incorretos. Tente novamente.';
+        audios.derrota.play();
+
+        // Exibir a imagem Lois ao lado do boneco com tamanho ajustado
+        const imgLois = document.createElement('img');
+        imgLois.src = 'imagens/Lois.png';
+        imgLois.id = 'imgLois';
+        imgLois.style.position = 'absolute';
+        imgLois.style.width = '250px';  // Aumenta ainda mais o tamanho da imagem
+        imgLois.style.height = 'auto'; // Mantém a proporção original
+        imgLois.style.top = `${boneco.offsetTop}px`;
+        imgLois.style.left = `${boneco.offsetLeft + boneco.offsetWidth - 30}px`; // Aproxima a imagem ao boneco
+        imgLois.style.zIndex = '1000';
+        document.body.appendChild(imgLois);
+
+        // Remover a imagem após o tempo de duração do som de derrota
+        setTimeout(() => {
+            imgLois.remove();
+        }, audios.derrota.duration * 1000); // Duração em milissegundos
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('cenario').style.display = 'block';
+    document.getElementById('boneco-inicial').style.display = 'block';
+});
+
+function reiniciarPagina() {
+    location.reload();
+}
+
+function salvarPontuacao(nome, tempo) {
+    // Recupera a classificação do localStorage
+    let classificacao = JSON.parse(localStorage.getItem('classificacao')) || [];
+
+    // Adiciona o novo jogador com o tempo
+    classificacao.push({ nome: nome, tempo: tempo });
+
+    // Ordena a classificação pelo tempo (menor tempo primeiro)
+    classificacao.sort((a, b) => a.tempo - b.tempo);
+
+    // Mantém apenas os 15 melhores tempos
+    if (classificacao.length > 15) {
+        classificacao = classificacao.slice(0, 15);
+    }
+
+    // Salva de volta no localStorage
+    localStorage.setItem('classificacao', JSON.stringify(classificacao));
+}
+
+
+function removerEPIs(event) {
+    const epi = event.target;
+    const posicaoOriginal = JSON.parse(epi.dataset.positionOriginal);
+    const originalId = epi.dataset.originalId;
+
+    // Remove o EPI do boneco
+    epi.remove();
+
+    // Devolve o EPI à área de seleção
+    const episSelecionaveis = document.getElementById('epis');
+    const originalEPI = document.getElementById(originalId);
+
+    if (originalEPI) {
+        // Reposiciona o EPI original na área de seleção
+        originalEPI.style.position = 'relative'; // Voltar a posição relativa
+        originalEPI.style.top = ''; // Remove estilos antigos de posicionamento
+        originalEPI.style.left = '';
+        originalEPI.style.width = ''; // Remove estilos antigos de tamanho
+        originalEPI.style.height = '';
+
+        episSelecionaveis.appendChild(originalEPI);
+    }
+}
+
+    </script>
+</body>
+</html>
