@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tempo Esgotado</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column; /* Para empilhar o botão e a imagem */
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            position: relative; /* Para posicionar os elementos absolutamente */
+            overflow: hidden; /* Para evitar barras de rolagem */
+        }
+        img.lois {
+            position: absolute; /* Para permitir a posição aleatória */
+            pointer-events: none; /* Para evitar que as imagens interfiram com cliques */
+        }
+        button {
+            margin-top: 20px; /* Espaçamento entre a imagem e o botão */
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <img src="imagens/download.gif" alt="Tempo Esgotado">
+    
+    <audio id="gameOverMusic" src="imagens/game.mp3" preload="auto"></audio>
+    <button id="restartButton">Jogar Novamente</button>
+
+    <script>
+        // Função para tocar a música
+        function tocarMusica() {
+            const music = document.getElementById('gameOverMusic');
+            music.play().catch(error => {
+                console.error('Erro ao tentar tocar a música:', error);
+            });
+        }
+
+        // Função para reiniciar o jogo
+        function reiniciarJogo() {
+            // Tocar a música e esperar até que termine
+            const music = document.getElementById('gameOverMusic');
+            music.currentTime = 0; // Reinicia a música
+            tocarMusica();
+
+            // Espera a duração da música antes de reiniciar a página
+            music.onended = function() {
+                window.location.href = 'index.html'; // Redireciona para a tela inicial do jogo
+            };
+        }
+
+        // Adiciona evento de clique ao botão
+        document.getElementById('restartButton').addEventListener('click', reiniciarJogo);
+
+        function gerarLois() {
+            const loisImg = document.createElement('img');
+            loisImg.src = 'imagens/Lois.png'; // A imagem de Lois
+            loisImg.className = 'lois';
+
+            // Definindo tamanho aleatório
+            const tamanho = Math.random() * 200 + 200; // Aumentando o tamanho entre 300px e 500px
+            loisImg.style.width = `${tamanho}px`;
+            loisImg.style.height = `${tamanho}px`;
+
+            // Posição aleatória
+            const posX = Math.random() * (window.innerWidth - tamanho);
+            const posY = Math.random() * (window.innerHeight - tamanho);
+            loisImg.style.left = `${posX}px`;
+            loisImg.style.top = `${posY}px`;
+
+            document.body.appendChild(loisImg);
+
+            // Remover a imagem após um curto período
+            setTimeout(() => {
+                document.body.removeChild(loisImg);
+            }, 500); // Duração de 500ms
+        }
+
+        // Gerar várias imagens de Lois
+        const intervaloLois = setInterval(gerarLois, 200); // Gera uma nova imagem a cada 200ms
+    </script>
+</body>
+</html>

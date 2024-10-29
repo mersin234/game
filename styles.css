@@ -1,0 +1,18 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+
+#cenario, #jogo {
+    margin: 20px;
+}
+
+#boneco {
+    margin: 20px;
+    position: relative;
+}
+
+#epis img {
+    cursor: pointer;
+    margin: 10px;
+}
